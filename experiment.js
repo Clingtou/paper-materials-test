@@ -377,11 +377,15 @@ function incomeTrial() {
               <option value="Other">Other local currency</option>
             </select>
           </div>
+          <div id="other-currency-wrap" class="other-currency-wrap" style="display: none;">
+            <label class="field-label" for="income_currency_other">Please specify currency</label>
+            <input class="input-text other-currency-input" id="income_currency_other" type="text" name="income_currency_other" placeholder="e.g., CAD, AUD, CNY">
+          </div>
         </div>
       </div>
 
       <button type="submit" class="form-submit">Submit</button>
-      <div id="income-required" class="required-note">Please enter a number and select a currency before continuing.</div>
+      <div id="income-required" class="required-note">Please enter a number and select a currency. If you select “Other local currency,” please specify the currency.</div>
     </form>
   `);
 
@@ -394,9 +398,25 @@ function incomeTrial() {
       const pageStart = performance.now();
       const form = document.getElementById("income-form");
       const warning = document.getElementById("income-required");
+      const currencySelect = document.getElementById("income_currency");
+      const otherWrap = document.getElementById("other-currency-wrap");
+      const otherInput = document.getElementById("income_currency_other");
+
+      function updateOtherCurrencyField() {
+        const needsOther = currencySelect.value === "Other";
+        otherWrap.style.display = needsOther ? "block" : "none";
+        otherInput.required = needsOther;
+        if (!needsOther) {
+          otherInput.value = "";
+        }
+      }
+
+      currencySelect.addEventListener("change", updateOtherCurrencyField);
+      updateOtherCurrencyField();
 
       form.addEventListener("submit", function (event) {
         event.preventDefault();
+        updateOtherCurrencyField();
         if (!form.checkValidity()) {
           warning.style.display = "block";
           form.reportValidity();
@@ -406,6 +426,7 @@ function incomeTrial() {
         jsPsych.finishTrial({
           monthly_disposable_income: response.monthly_disposable_income,
           income_currency: response.income_currency,
+          income_currency_other: response.income_currency_other || "",
           income_page_rt: Math.round(performance.now() - pageStart)
         });
       });
