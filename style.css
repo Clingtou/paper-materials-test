@@ -191,6 +191,7 @@ p {
 .choice-text {
   font-size: clamp(26px, 1.75vw, 34px);
   line-height: 1.45;
+  white-space: pre-line;
 }
 
 .form-question {
@@ -420,4 +421,9 @@ p {
 
 .other-currency-input {
   width: 260px;
+}
+
+
+.study-shell.abort-shell {
+  margin-top: 10vh;
 }
