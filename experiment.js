@@ -17,6 +17,13 @@ const jsPsych = initJsPsych({
 
 const experimentStartPerf = performance.now();
 
+let fullscreenAbortArmed = false;
+let plannedFullscreenExit = false;
+
+function currentFullscreenElement() {
+  return document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement || null;
+}
+
 const prolific_pid = jsPsych.data.getURLVariable("PROLIFIC_PID") || "missing";
 const study_id = jsPsych.data.getURLVariable("STUDY_ID") || "missing";
 const session_id = jsPsych.data.getURLVariable("SESSION_ID") || jsPsych.randomization.randomID(12);
@@ -66,7 +73,7 @@ const conditionTable = [
       decision_domain: "risk_probability",
       scenario: "Imagine that you can choose between two investment options.",
       question: "Which option would you prefer?",
-      left: "50% chance to win $1.00, 50% chance to win $0.00",
+      left: "50% chance to win $1.00,\n50% chance to win $0.00",
       right: "Sure gain of $0.40"
     },
     decision_2: {
@@ -84,7 +91,7 @@ const conditionTable = [
       decision_domain: "risk_probability",
       scenario: "Imagine that you can choose between two investment options.",
       question: "Which option would you prefer?",
-      left: "30% chance to win $2.00, 60% chance to win $0.00",
+      left: "30% chance to win $2.00,\n60% chance to win $0.00",
       right: "Sure gain of $0.40"
     },
     decision_2: {
@@ -103,7 +110,7 @@ const conditionTable = [
       scenario: "Imagine that you can choose between two investment options.",
       question: "Which option would you prefer?",
       left: "Sure gain of $0.40",
-      right: "5% chance to win $20.00, 95% chance to win $0.00"
+      right: "5% chance to win $20.00,\n95% chance to win $0.00"
     },
     decision_2: {
       decision_domain: "intertemporal_choice",
@@ -123,6 +130,26 @@ function shellHtml(innerHtml, topTitle = "Economic Decision Preference Study", e
     </div>
   `;
 }
+
+function handleFullscreenChange() {
+  if (fullscreenAbortArmed && !plannedFullscreenExit && !currentFullscreenElement()) {
+    fullscreenAbortArmed = false;
+    jsPsych.data.addProperties({
+      fullscreen_exit_abort: 1,
+      fullscreen_exit_abort_time_ms: Math.round(performance.now() - experimentStartPerf)
+    });
+    jsPsych.endExperiment(shellHtml(`
+      <h2 class="intro-title">The study has ended.</h2>
+      <p class="warning">You exited fullscreen mode during the fullscreen decision section.</p>
+      <p>Please return this study on Prolific. Do not submit a completion code.</p>
+    `, "Economic Decision Preference Study", "abort-shell"));
+  }
+}
+
+document.addEventListener("fullscreenchange", handleFullscreenChange);
+document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
 function choiceHtml(decision) {
   return shellHtml(`
@@ -514,7 +541,14 @@ async function buildAndRunExperiment() {
       <p>Please use a desktop or laptop computer. The first decision pages will be completed in fullscreen mode.</p>
     </div>`,
     button_label: "Enter fullscreen and start",
-    data: { phase: "fullscreen_start" }
+    data: { phase: "fullscreen_start" },
+    on_finish: function () {
+      plannedFullscreenExit = false;
+      fullscreenAbortArmed = true;
+      jsPsych.data.addProperties({
+        fullscreen_started: currentFullscreenElement() ? 1 : 0
+      });
+    }
   });
 
   timeline.push({
@@ -537,7 +571,18 @@ async function buildAndRunExperiment() {
     type: jsPsychFullscreen,
     fullscreen_mode: false,
     delay_after: 0,
-    data: { phase: "fullscreen_end" }
+    data: { phase: "fullscreen_end" },
+    on_start: function () {
+      plannedFullscreenExit = true;
+      fullscreenAbortArmed = false;
+    },
+    on_finish: function () {
+      plannedFullscreenExit = false;
+      fullscreenAbortArmed = false;
+      jsPsych.data.addProperties({
+        fullscreen_completed_normally: 1
+      });
+    }
   });
 
   timeline.push(singleChoiceQuestionsTrial());
