@@ -84,7 +84,7 @@ const conditionTable = [
       decision_domain: "risk_probability",
       scenario: "Imagine that you can choose between two investment options.",
       question: "Which option would you prefer?",
-      left: "30% chance to win $2.00, 70% chance to win $0.00",
+      left: "30% chance to win $2.00, 60% chance to win $0.00",
       right: "Sure gain of $0.40"
     },
     decision_2: {
@@ -115,9 +115,9 @@ const conditionTable = [
   }
 ];
 
-function shellHtml(innerHtml, topTitle = "Economic Decision Preference Study") {
+function shellHtml(innerHtml, topTitle = "Economic Decision Preference Study", extraClass = "") {
   return `
-    <div class="study-shell">
+    <div class="study-shell ${extraClass}">
       <div class="qualtrics-topbar">${topTitle}</div>
       <div class="qualtrics-card">${innerHtml}</div>
     </div>
@@ -130,37 +130,64 @@ function choiceHtml(decision) {
     <div class="decision-question">${decision.question}</div>
     <div class="key-hint">Press ← or → to choose.</div>
     <div class="choice-grid">
-      <div class="choice-card">
+      <div class="choice-card" id="decision-left-card">
         <div class="choice-key">← Left option</div>
         <div class="choice-text">${decision.left}</div>
       </div>
-      <div class="choice-card">
+      <div class="choice-card" id="decision-right-card">
         <div class="choice-key">Right option →</div>
         <div class="choice-text">${decision.right}</div>
       </div>
     </div>
-  `);
+  `, "Economic Decision Preference Study", "decision-shell");
 }
 
 function makeDecisionTrial(decision, decisionNumber) {
   return {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: choiceHtml(decision),
-    choices: ["ArrowLeft", "ArrowRight"],
+    choices: "NO_KEYS",
     data: {
       phase: "keyboard_decision",
       decision_number: decisionNumber,
       decision_domain: decision.decision_domain,
       decision_left_option: decision.left,
       decision_right_option: decision.right,
-      response_mapping: "ArrowLeft_left_ArrowRight_right"
+      response_mapping: "ArrowLeft_left_ArrowRight_right",
+      feedback_delay_ms: 1000
     },
-    on_finish: function (data) {
-      const key = String(data.response || "").toLowerCase();
-      data.choice_key = key;
-      data.choice_side = key === "arrowleft" ? "left" : key === "arrowright" ? "right" : "missing";
-      data.chosen_option = data.choice_side === "left" ? decision.left : data.choice_side === "right" ? decision.right : "missing";
-      data.decision_rt = data.rt;
+    on_load: function () {
+      const pageStart = performance.now();
+      let responded = false;
+
+      const finishAfterFeedback = function (event) {
+        if (responded) return;
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+
+        event.preventDefault();
+        responded = true;
+        document.removeEventListener("keydown", finishAfterFeedback);
+
+        const rt = Math.round(performance.now() - pageStart);
+        const choice_side = event.key === "ArrowLeft" ? "left" : "right";
+        const chosen_option = choice_side === "left" ? decision.left : decision.right;
+        const selectedCard = document.getElementById(choice_side === "left" ? "decision-left-card" : "decision-right-card");
+        if (selectedCard) selectedCard.classList.add("choice-card-selected");
+
+        setTimeout(function () {
+          jsPsych.finishTrial({
+            rt: rt,
+            response: event.key,
+            choice_key: event.key,
+            choice_side: choice_side,
+            chosen_option: chosen_option,
+            decision_rt: rt,
+            feedback_delay_ms: 1000
+          });
+        }, 1000);
+      };
+
+      document.addEventListener("keydown", finishAfterFeedback);
     }
   };
 }
@@ -174,29 +201,53 @@ function collectFormData(form) {
   return response;
 }
 
-function twoScalesTrial() {
+function singleChoiceQuestionsTrial() {
+  const riskOptions = [
+    { value: 1, label: "1 - Not willing at all" },
+    { value: 2, label: "2 - Slightly willing" },
+    { value: 3, label: "3 - Moderately willing" },
+    { value: 4, label: "4 - Very willing" },
+    { value: 5, label: "5 - Extremely willing" }
+  ];
+
+  const impatienceOptions = [
+    { value: 1, label: "1 - Not impatient at all" },
+    { value: 2, label: "2 - Slightly impatient" },
+    { value: 3, label: "3 - Moderately impatient" },
+    { value: 4, label: "4 - Very impatient" },
+    { value: 5, label: "5 - Extremely impatient" }
+  ];
+
   const html = shellHtml(`
-    <form id="two-scales-form">
+    <form id="single-choice-form">
       <p class="muted">Please answer the following questions.</p>
 
-      <div class="form-question">
+      <div class="form-question single-choice-question">
         <div class="question-text">1. In general, how willing are you to take risks?</div>
-        <div class="scale-anchors"><span>Not willing at all</span><span>Very willing</span></div>
-        <div class="radio-row" role="radiogroup" aria-label="risk willingness">
-          ${[1,2,3,4,5].map(v => `<label class="radio-tile"><input type="radio" name="risk_willing_5" value="${v}" required><span>${v}</span></label>`).join("")}
+        <div class="single-choice-list" role="radiogroup" aria-label="risk willingness">
+          ${riskOptions.map(o => `
+            <label class="single-choice-option">
+              <input type="radio" name="risk_willing_5" value="${o.value}" required>
+              <span>${o.label}</span>
+            </label>
+          `).join("")}
         </div>
       </div>
 
-      <div class="form-question">
+      <div class="form-question single-choice-question">
         <div class="question-text">2. How impatient do you feel when waiting for a delayed reward?</div>
-        <div class="scale-anchors"><span>Not impatient at all</span><span>Very impatient</span></div>
-        <div class="radio-row" role="radiogroup" aria-label="delay impatience">
-          ${[1,2,3,4,5].map(v => `<label class="radio-tile"><input type="radio" name="delay_impatience_5" value="${v}" required><span>${v}</span></label>`).join("")}
+        <div class="single-choice-list" role="radiogroup" aria-label="delay impatience">
+          ${impatienceOptions.map(o => `
+            <label class="single-choice-option">
+              <input type="radio" name="delay_impatience_5" value="${o.value}" required>
+              <span>${o.label}</span>
+            </label>
+          `).join("")}
         </div>
       </div>
 
       <button type="submit" class="form-submit">Next</button>
-      <div id="two-scales-required" class="required-note">Please answer both questions before continuing.</div>
+      <div id="single-choice-required" class="required-note">Please answer both questions before continuing.</div>
     </form>
   `);
 
@@ -204,12 +255,12 @@ function twoScalesTrial() {
     type: jsPsychHtmlKeyboardResponse,
     stimulus: html,
     choices: "NO_KEYS",
-    data: { phase: "two_single_choice_scales" },
+    data: { phase: "two_single_choice_questions" },
     on_load: function () {
       const pageStart = performance.now();
       const clickLog = [];
-      const form = document.getElementById("two-scales-form");
-      const warning = document.getElementById("two-scales-required");
+      const form = document.getElementById("single-choice-form");
+      const warning = document.getElementById("single-choice-required");
 
       form.querySelectorAll('input[type="radio"]').forEach(function (input) {
         input.addEventListener("click", function () {
@@ -252,9 +303,9 @@ function sesLadderTrial() {
         <div class="ladder-wrap">
           <img src="ladder.png" class="ladder-image" alt="Social status ladder from bottom to top">
           <div class="ladder-scale-block">
-            <div class="scale-anchors"><span>Bottom</span><span>Top</span></div>
-            <div class="radio-row" role="radiogroup" aria-label="subjective social status ladder">
-              ${[1,2,3,4,5,6,7].map(v => `<label class="radio-tile"><input type="radio" name="ses_ladder_7" value="${v}" required><span>${v}</span></label>`).join("")}
+            <div class="ladder-scale-anchors-10"><span>Bottom</span><span>Top</span></div>
+            <div class="ladder-radio-row" role="radiogroup" aria-label="subjective social status ladder">
+              ${[1,2,3,4,5,6,7,8,9,10].map(v => `<label class="radio-tile ladder-radio-tile"><input type="radio" name="ses_ladder_10" value="${v}" required><span>${v}</span></label>`).join("")}
             </div>
           </div>
         </div>
@@ -296,7 +347,7 @@ function sesLadderTrial() {
         }
         const response = collectFormData(form);
         jsPsych.finishTrial({
-          ses_ladder_7: response.ses_ladder_7,
+          ses_ladder_10: response.ses_ladder_10,
           ses_click_log: JSON.stringify(clickLog),
           ses_click_count: clickLog.length,
           ses_page_rt: Math.round(performance.now() - pageStart)
@@ -311,12 +362,26 @@ function incomeTrial() {
     <form id="income-form">
       <div class="form-question">
         <div class="question-text">What is your approximate monthly disposable income?</div>
-        <p class="muted">Please enter a number in your local currency. If you are unsure, give your best estimate.</p>
-        <input class="input-text" type="number" name="monthly_disposable_income" min="0" step="1" required placeholder="Enter a number">
+        <p class="muted">Please enter the amount you personally have available to spend or save in a typical month after taxes and necessary fixed expenses.</p>
+        <div class="income-row">
+          <div>
+            <label class="field-label" for="monthly_disposable_income">Amount per month</label>
+            <input class="input-text" id="monthly_disposable_income" type="number" name="monthly_disposable_income" min="0" step="1" required placeholder="Enter a number">
+          </div>
+          <div>
+            <label class="field-label" for="income_currency">Currency</label>
+            <select class="input-select" id="income_currency" name="income_currency" required>
+              <option value="USD" selected>USD ($)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="Other">Other local currency</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <button type="submit" class="form-submit">Submit</button>
-      <div id="income-required" class="required-note">Please enter a number before continuing.</div>
+      <div id="income-required" class="required-note">Please enter a number and select a currency before continuing.</div>
     </form>
   `);
 
@@ -340,6 +405,7 @@ function incomeTrial() {
         const response = collectFormData(form);
         jsPsych.finishTrial({
           monthly_disposable_income: response.monthly_disposable_income,
+          income_currency: response.income_currency,
           income_page_rt: Math.round(performance.now() - pageStart)
         });
       });
@@ -437,8 +503,8 @@ async function buildAndRunExperiment() {
       <p>This study asks about your preferences in several economic decisions.</p>
       <p>For the next two pages, please choose between the left and right options using your keyboard.</p>
       <p><b>Press ← to choose the left option. Press → to choose the right option.</b></p>
-      <p class="muted">Please respond based on your own preferences. There are no right or wrong answers.</p>
-    `),
+      <p class="muted">After you press a key, the selected option will be highlighted briefly before the next page appears.</p>
+    `, "Economic Decision Preference Study", "instruction-shell"),
     choices: ["Continue"],
     data: { phase: "instruction_fullscreen" }
   });
@@ -453,7 +519,7 @@ async function buildAndRunExperiment() {
     data: { phase: "fullscreen_end" }
   });
 
-  timeline.push(twoScalesTrial());
+  timeline.push(singleChoiceQuestionsTrial());
   timeline.push(sesLadderTrial());
   timeline.push(incomeTrial());
 
