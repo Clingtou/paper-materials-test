@@ -1,0 +1,280 @@
+:root {
+  --blue: #2f80ed;
+  --blue-dark: #1f5fbf;
+  --blue-light: #eaf3ff;
+  --border: #d9dfe7;
+  --text: #1f2937;
+  --muted: #5f6b7a;
+  --background: #ffffff;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--text);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.jspsych-display-element,
+.jspsych-content-wrapper,
+#jspsych-content {
+  background: var(--background) !important;
+}
+
+#jspsych-content {
+  max-width: 940px !important;
+  margin: 0 auto !important;
+  text-align: left;
+}
+
+.study-shell {
+  width: min(900px, calc(100vw - 48px));
+  margin: 32px auto;
+  background: #fff;
+}
+
+.qualtrics-topbar {
+  background: var(--blue);
+  color: #fff;
+  padding: 16px 24px;
+  border-radius: 8px 8px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+}
+
+.qualtrics-card {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 28px 36px;
+  box-shadow: 0 2px 8px rgba(31, 41, 55, 0.06);
+}
+
+.qualtrics-card.standalone {
+  border-top: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.intro-title {
+  margin: 0 0 14px 0;
+  font-size: 27px;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+p {
+  font-size: 18px;
+  line-height: 1.55;
+  margin: 10px 0;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.warning {
+  color: #b42318;
+  background: #fff4f2;
+  border: 1px solid #ffd0c8;
+  padding: 12px 14px;
+  border-radius: 6px;
+}
+
+.fullscreen-message {
+  width: min(780px, calc(100vw - 60px));
+  margin: 80px auto 20px auto;
+  text-align: center;
+  color: var(--text);
+  font-size: 20px;
+  line-height: 1.55;
+}
+
+.jspsych-btn,
+.primary-btn,
+.form-submit {
+  background: var(--blue) !important;
+  color: white !important;
+  border: 1px solid var(--blue-dark) !important;
+  border-radius: 4px !important;
+  padding: 10px 22px !important;
+  font-size: 17px !important;
+  cursor: pointer !important;
+  margin: 22px 0 0 0 !important;
+}
+
+.jspsych-btn:hover,
+.primary-btn:hover,
+.form-submit:hover {
+  background: var(--blue-dark) !important;
+}
+
+.decision-title {
+  font-size: 23px;
+  line-height: 1.35;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.decision-question {
+  font-size: 21px;
+  font-weight: 700;
+  margin: 12px 0 6px 0;
+}
+
+.key-hint {
+  display: inline-block;
+  background: var(--blue-light);
+  color: var(--blue-dark);
+  border: 1px solid #bad7ff;
+  border-radius: 5px;
+  padding: 8px 12px;
+  margin: 10px 0 22px 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: stretch;
+  margin-top: 12px;
+}
+
+.choice-card {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 22px 24px;
+  background: #fff;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.choice-key {
+  color: var(--blue-dark);
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 14px;
+}
+
+.choice-text {
+  font-size: 21px;
+  line-height: 1.45;
+}
+
+.form-question {
+  margin: 22px 0 26px 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.form-question:last-of-type {
+  border-bottom: none;
+}
+
+.question-text {
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.scale-anchors {
+  display: flex;
+  justify-content: space-between;
+  max-width: 620px;
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.radio-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.radio-tile {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 38px;
+  border: 1px solid #aab4c1;
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.radio-tile input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.radio-tile:has(input[type="radio"]:checked) {
+  background: var(--blue);
+  border-color: var(--blue-dark);
+  color: white;
+}
+
+.ladder-wrap {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+
+.ladder-image {
+  width: 310px;
+  max-width: 92vw;
+  display: block;
+}
+
+.ladder-scale-block {
+  flex: 1;
+  min-width: 280px;
+}
+
+.input-text {
+  width: 320px;
+  max-width: 90%;
+  height: 42px;
+  border: 1px solid #aab4c1;
+  border-radius: 4px;
+  font-size: 19px;
+  padding: 7px 10px;
+}
+
+.required-note {
+  color: #b42318;
+  font-size: 15px;
+  margin-top: 10px;
+  display: none;
+}
+
+.saving-card {
+  text-align: center;
+  padding: 48px 36px;
+}
+
+.saving-card h2 {
+  color: var(--blue-dark);
+}
+
+@media (max-width: 760px) {
+  .choice-grid {
+    grid-template-columns: 1fr;
+  }
+}
