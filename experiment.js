@@ -6,7 +6,7 @@
 const DATAPIPE_EXPERIMENT_ID = "2RInaGI34Bnq";
 
 // Add your Prolific completion code later. Leave blank while only testing OSF saving.
-const PROLIFIC_COMPLETION_CODE = "";
+const PROLIFIC_COMPLETION_CODE = "C3SAL531";
 
 const jsPsych = initJsPsych({
   use_webaudio: false,
