@@ -413,3 +413,11 @@ p {
     min-width: 100%;
   }
 }
+
+.other-currency-wrap {
+  min-width: 260px;
+}
+
+.other-currency-input {
+  width: 260px;
+}
